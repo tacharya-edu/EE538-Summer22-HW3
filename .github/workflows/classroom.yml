@@ -1,0 +1,84 @@
+name: GitHub Classroom Workflow
+
+on: [push, pull_request]
+    
+jobs:
+  build:
+    name: Autograding
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: bazelbuild/setup-bazelisk@v2
+      - uses: actions/checkout@v2  
+      - uses: actions/checkout@master
+        with:
+            repository: 'ee538/Summer22_HW3_CodingGrader'
+            path: 'coding_grader'
+      - name: Checkout code
+        env:
+            questions: 1 2 4 5 6
+        run: |
+             for f in $questions; do cp files/${f}/{q.cc,q.h} coding_grader/${f}; done
+      
+      - name: Test Q1
+        run: |
+             echo "--------- student test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //files/1:student_test 2>&1 | tee ST_Q1res.txt
+             echo "--------- grader test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //coding_grader/1:grader_test 2>&1 | tee Q1res.txt
+             grep "OK" Q1res.txt > Q1res_.txt
+             
+      - name: Test Q2
+        run: |
+             echo "--------- student test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //files/2:student_test 2>&1 | tee ST_Q2res.txt
+             echo "--------- grader test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //coding_grader/2:grader_test 2>&1 | tee Q2res.txt
+             grep "OK" Q2res.txt > Q2res_.txt
+             
+      - name: Test Q4
+        run: |
+             echo "--------- student test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //files/4:student_test 2>&1 | tee ST_Q4res.txt
+             echo "--------- grader test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //coding_grader/4:grader_test 2>&1 | tee Q4res.txt
+             grep "OK" Q4res.txt > Q4res_.txt
+
+      - name: Test Q5
+        run: |
+             echo "--------- student test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //files/5:student_test 2>&1 | tee ST_Q5res.txt             
+             echo "--------- grader test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //coding_grader/5:grader_test 2>&1 | tee Q5res.txt
+             grep "OK" Q5res.txt > Q5res_.txt
+
+      - name: Test Q6
+        run: |
+             echo "--------- student test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //files/6:student_test 2>&1 | tee ST_Q6res.txt             
+             echo "--------- grader test ---------"
+             bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //coding_grader/6:grader_test 2>&1 | tee Q6res.txt
+             grep "OK" Q6res.txt > Q6res_.txt
+
+      - name: Organize the total score (coding questions)
+        run: |
+             rm -rf grades
+             rm -rf ScoresCodingTotal.txt
+             mkdir grades
+             mv Q*res.txt Q*res_.txt grades
+             
+             python .github/coding_grades_total.py 2>&1 | tee ScoresCodingTotal.txt
+
+             # clean temporary files
+             rm -rf grades
+             rm -rf ST_*
+             rm -rf coding_grader
+             
+             # add time stamp to submitted hw
+             TZ='America/Los_Angeles' date >> ScoresCodingTotal.txt
+             
+             git config --global user.email "autograder@github.com"
+             git config --global user.name "autograder"
+             git add ScoresCodingTotal.txt
+             
+             git commit -m "Add autograding results"
+             git push origin HEAD:main
