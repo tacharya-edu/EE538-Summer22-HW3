@@ -6,7 +6,6 @@ jobs:
   build:
     name: Autograding
     runs-on: ubuntu-18.04
-    if: always()
     steps:
       - uses: bazelbuild/setup-bazelisk@v2
       - uses: actions/checkout@v2  
@@ -32,6 +31,7 @@ jobs:
              grep "OK" Q1res.txt > Q1res_.txt
 
       - name: Test Q2
+        if: always()
         run: |
              echo "--------- student test ---------"
              bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //files/2:student_test 2>&1 | tee ST_Q2res.txt
@@ -40,6 +40,7 @@ jobs:
              grep "OK" Q2res.txt > Q2res_.txt
              
       - name: Test Q4
+        if: always()
         run: |
              echo "--------- student test ---------"
              bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //files/4:student_test 2>&1 | tee ST_Q4res.txt
@@ -48,6 +49,7 @@ jobs:
              grep "OK" Q4res.txt > Q4res_.txt
 
       - name: Test Q5
+        if: always()
         run: |
              echo "--------- student test ---------"
              bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //files/5:student_test 2>&1 | tee ST_Q5res.txt             
@@ -56,6 +58,7 @@ jobs:
              grep "OK" Q5res.txt > Q5res_.txt
 
       - name: Test Q6
+        if: always()
         run: |
              echo "--------- student test ---------"
              bazel run --config=asan --ui_event_filters=-info,-stdout,-stderr //files/6:student_test 2>&1 | tee ST_Q6res.txt             
@@ -64,6 +67,7 @@ jobs:
              grep "OK" Q6res.txt > Q6res_.txt
              
       - name: Organize the total score (coding questions)
+        if: always()
         run: |
              mv Q*res.txt Q*res_.txt grades
              python coding_grader/coding_grades_total.py 2>&1 | tee ScoresCodingTotal.txt
